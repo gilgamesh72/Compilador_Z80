@@ -1,0 +1,36 @@
+# Build directories and artifacts
+build/
+bin/c-mini-compiler
+bin/*.exe
+*.o
+*.out
+
+# Generated flex/bison files (if they are built in src)
+lex.yy.c
+lex.yy.cpp
+parser.tab.c
+parser.tab.cpp
+parser.tab.h
+
+# Output files from compiler
+*.asm
+output.asm
+tests/output.asm
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
