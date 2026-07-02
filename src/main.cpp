@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     yyin = file;
     cout << "[1/4] Ejecutando análisis léxico y sintáctico...\n";
     if (yyparse() != 0 || lex_errors > 0) {
-        cerr << "Error durante el análisis léxico o sintáctico. Deteniendo compilación.\n";
+        cerr << "Deteniendo compilación...\n";
         return 1;
     }
 
@@ -45,8 +45,7 @@ int main(int argc, char** argv) {
     TACGenerator tacGen;
     tacGen.generate(program_root);
     
-    // Opcional: imprimir el TAC para depuración
-    // tacGen.printAll();
+
 
     cout << "[4/4] Generando Código Z80...\n";
     Z80Generator z80Gen(tacGen.getInstructions());

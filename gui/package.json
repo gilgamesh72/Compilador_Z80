@@ -1,0 +1,17 @@
+{
+  "name": "cmini-ide",
+  "version": "1.0.0",
+  "description": "IDE de escritorio para el compilador C-Mini → Z80 ASM",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Diana",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0"
+  },
+  "allowScripts": {
+    "electron@31.7.7": true
+  }
+}

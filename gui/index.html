@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C-Mini IDE</title>
+  <meta name="description" content="IDE de escritorio para compilar código C-Mini a ensamblador Z80" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/theme/one-dark.min.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ── Custom Titlebar ─────────────────────────────────────── -->
+  <div id="titlebar">
+    <div id="titlebar-left">
+      <span class="app-icon"></span>
+      <span class="app-name">C-Mini IDE</span>
+      <span id="file-badge" class="file-badge">Sin título.cmini</span>
+      <span id="dirty-indicator" class="dirty-dot" title="Cambios sin guardar" style="display:none">●</span>
+    </div>
+    <div id="titlebar-center" class="drag-region"></div>
+    <div id="titlebar-right">
+      <button class="win-btn" id="btn-minimize" title="Minimizar">─</button>
+      <button class="win-btn" id="btn-maximize" title="Maximizar">□</button>
+      <button class="win-btn close" id="btn-close" title="Cerrar">✕</button>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ─────────────────────────────────────────────── -->
+  <div id="toolbar">
+    <div id="toolbar-left">
+      <button class="toolbar-btn" id="btn-new" title="Nuevo archivo (Ctrl+N)">
+        <span class="btn-icon"></span> Nuevo
+      </button>
+      <button class="toolbar-btn" id="btn-open" title="Abrir archivo (Ctrl+O)">
+        <span class="btn-icon"></span> Abrir
+      </button>
+      <button class="toolbar-btn" id="btn-save" title="Guardar (Ctrl+S)">
+        <span class="btn-icon"></span> Guardar
+      </button>
+      <div class="toolbar-divider"></div>
+    </div>
+
+    <div id="toolbar-center">
+      <button class="toolbar-btn compile-btn" id="btn-compile" title="Compilar (F5)">
+        <span class="compile-icon" id="compile-icon">▶</span>
+        <span id="compile-label">Compilar</span>
+      </button>
+    </div>
+
+    <div id="toolbar-right">
+      <div id="status-pill" class="status-pill idle">
+        <span class="status-dot"></span>
+        <span id="status-text">Listo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Layout ─────────────────────────────────────────── -->
+  <div id="main-layout">
+
+    <!-- ── Editor Panel ──────────────────────────────────────── -->
+    <div id="editor-panel">
+      <div id="editor-header">
+        <span class="panel-icon"></span>
+        <span class="panel-title">Editor</span>
+        <span id="cursor-pos" class="cursor-pos">Línea 1, Col 1</span>
+      </div>
+      <div id="editor-wrapper">
+        <textarea id="code-editor"></textarea>
+      </div>
+    </div>
+
+    <!-- ── Resize Handle ─────────────────────────────────────── -->
+    <div id="resize-handle"></div>
+
+    <!-- ── Output Panel ──────────────────────────────────────── -->
+    <div id="output-panel">
+      <div id="output-header">
+        <span class="panel-icon"></span>
+        <span class="panel-title">Terminal de compilación</span>
+        <div id="output-actions">
+          <button class="icon-btn" id="btn-save-tap" title="Guardar .tap" disabled>
+            Guardar TAP
+          </button>
+          <button class="icon-btn secondary" id="btn-clear" title="Limpiar terminal">
+            Limpiar
+          </button>
+        </div>
+      </div>
+      <div id="terminal-output">
+        <div class="term-welcome">
+          <div class="term-logo">⚙ C-Mini → Z80 Compiler</div>
+          <div class="term-subtitle">Escribe tu código y presiona <kbd>F5</kbd> o haz clic en <strong>Compilar</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Scripts ─────────────────────────────────────────────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/selection/active-line.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/addon/comment/comment.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+
+</html>

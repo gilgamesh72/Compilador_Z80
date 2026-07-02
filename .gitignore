@@ -1,3 +1,7 @@
+# Dependencies
+node_modules/
+package-lock.json
+
 # Build directories and artifacts
 build/
 bin/c-mini-compiler
