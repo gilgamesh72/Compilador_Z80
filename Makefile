@@ -1,15 +1,18 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -Isrc
+CXXFLAGS = -std=c++14 -Wall -Isrc -Ibuild
 FLEX = flex
 BISON = bison
 
-# Directories
+# Directorios
 SRC_DIR = src
 BUILD_DIR = build
 BIN_DIR = bin
 
-# Source files
-OBJS = $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/parser.tab.o $(BUILD_DIR)/semantic.o $(BUILD_DIR)/tac.o $(BUILD_DIR)/z80gen.o $(BUILD_DIR)/main.o
+# Objetos
+OBJS = $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/parser.tab.o \
+       $(BUILD_DIR)/semantic.o $(BUILD_DIR)/tac.o \
+       $(BUILD_DIR)/z80gen.o $(BUILD_DIR)/main.o
+
 TARGET = $(BIN_DIR)/c-mini-compiler
 
 all: $(TARGET)
@@ -29,17 +32,22 @@ $(BUILD_DIR)/lex.yy.o: $(BUILD_DIR)/lex.yy.cpp
 $(BUILD_DIR)/parser.tab.o: $(BUILD_DIR)/parser.tab.cpp
 	$(CXX) $(CXXFLAGS) -c $(BUILD_DIR)/parser.tab.cpp -o $@
 
-$(BUILD_DIR)/semantic.o: $(SRC_DIR)/semantic.cpp $(SRC_DIR)/semantic.h $(SRC_DIR)/ast.h $(SRC_DIR)/visitor.h
+$(BUILD_DIR)/semantic.o: $(SRC_DIR)/semantic.cpp $(SRC_DIR)/semantic.h \
+                          $(SRC_DIR)/ast.h $(SRC_DIR)/visitor.h
 	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/semantic.cpp -o $@
 
-$(BUILD_DIR)/tac.o: $(SRC_DIR)/tac.cpp $(SRC_DIR)/tac.h $(SRC_DIR)/ast.h $(SRC_DIR)/visitor.h
+$(BUILD_DIR)/tac.o: $(SRC_DIR)/tac.cpp $(SRC_DIR)/tac.h \
+                     $(SRC_DIR)/ast.h $(SRC_DIR)/visitor.h
 	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/tac.cpp -o $@
 
 $(BUILD_DIR)/z80gen.o: $(SRC_DIR)/z80gen.cpp $(SRC_DIR)/z80gen.h $(SRC_DIR)/tac.h
 	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/z80gen.cpp -o $@
 
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(SRC_DIR)/ast.h $(SRC_DIR)/semantic.h $(SRC_DIR)/tac.h $(SRC_DIR)/z80gen.h
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(SRC_DIR)/ast.h \
+                      $(SRC_DIR)/semantic.h $(SRC_DIR)/tac.h $(SRC_DIR)/z80gen.h
 	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/main.cpp -o $@
 
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/parser.tab.cpp $(BUILD_DIR)/parser.tab.h $(BUILD_DIR)/lex.yy.cpp $(TARGET) tests/output.asm
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/parser.tab.cpp \
+	      $(BUILD_DIR)/parser.tab.h $(BUILD_DIR)/lex.yy.cpp \
+	      $(TARGET) output.asm

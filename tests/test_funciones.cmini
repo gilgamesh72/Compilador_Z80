@@ -1,0 +1,66 @@
+// ========================================================
+// test_funciones.cmini — Prueba del soporte de funciones,
+// stack frames, y todas las nuevas características
+// ========================================================
+
+// Función que suma dos enteros
+int suma(int a, int b) {
+    int resultado;
+    resultado = a + b;
+    return resultado;
+}
+
+// Función que determina si un número es positivo (retorna 1 o 0)
+byte esPositivo(int n) {
+    if (0 < n) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+// Función de máximo entre dos valores
+int maximo(int x, int y) {
+    if (x < y) {
+        return y;
+    } else {
+        return x;
+    }
+}
+
+// Función que escribe un carácter en pantalla del ZX Spectrum
+void dibujarCelda(int pos, byte color) {
+    poke(pos, color);
+    return;
+}
+
+// Función principal del programa
+int main() {
+    int a;
+    int b;
+    int resultado;
+    byte positivo;
+
+    a = 10;
+    b = 20;
+
+    resultado = suma(a, b);          // resultado = 30
+
+    positivo = esPositivo(resultado); // positivo = 1
+
+    // Probar maximo
+    resultado = maximo(a, b);        // resultado = 20
+
+    // Escribir en pantalla (dirección 22528 = esquina superior izquierda)
+    dibujarCelda(22528, 56);
+
+    // Probar incremento/decremento
+    a++;
+    b--;
+
+    // Probar NOT lógico
+    byte flag;
+    flag = !positivo;               // flag = 0
+
+    return 0;
+}

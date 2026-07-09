@@ -1,0 +1,20 @@
+// ========================================================
+// test_errores.cmini — Prueba de recuperación de errores
+// El parser debe reportar TODOS los errores antes de
+// detenerse, sin parar en el primero.
+// ========================================================
+
+// Esta declaración es válida
+int x;
+
+// ERROR 1: token inesperado (falta el ';' al final ← Bison lo recupera)
+int y = 5
+
+// Esta asignación es válida (el parser continuó tras el error)
+x = 10;
+
+// ERROR 2: otro token inválido
+int z @ 3;
+
+// Esto también es válido
+x = x + 1;
