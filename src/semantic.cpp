@@ -25,6 +25,11 @@ void SemanticAnalyzer::visit(NumExpr* node) {
     node->exprType = DataType::INT;
 }
 
+static bool isByteRangeViolation(Expr* expr) {
+    NumExpr* num = dynamic_cast<NumExpr*>(expr);
+    return num && (num->value < 0 || num->value > 255);
+}
+
 void SemanticAnalyzer::visit(IdExpr* node) {
     Symbol* sym = currentEnv->lookup(node->name);
     if (!sym) {
@@ -93,6 +98,11 @@ void SemanticAnalyzer::visit(Assign* node) {
     } else if (node->value->exprType == DataType::VOID) {
          cerr << "Error semántico: No se puede asignar tipo VOID a la variable '" << node->name << "'\n";
          hasError = true;
+    } else if (sym->type == DataType::BYTE && isByteRangeViolation(node->value)) {
+        NumExpr* num = dynamic_cast<NumExpr*>(node->value);
+        cerr << "Error semántico: El valor " << num->value
+             << " está fuera del rango de byte (0-255) para la variable '" << node->name << "'\n";
+        hasError = true;
     }
 }
 

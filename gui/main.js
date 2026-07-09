@@ -66,11 +66,11 @@ ipcMain.handle('compile', async (event, sourceCode) => {
   return new Promise((resolve) => {
     // 1. Guardar el código fuente en un archivo temporal dentro del proyecto
     const tmpFile = path.join(PROJECT_DIR, `_cmini_temp_${Date.now()}.cmini`);
-    const tmpFileWsl   = toWslPath(tmpFile);
-    const compilerWsl  = toWslPath(COMPILER_BIN);
+    const tmpFileWsl = toWslPath(tmpFile);
+    const compilerWsl = toWslPath(COMPILER_BIN);
     const projectDirWsl = toWslPath(PROJECT_DIR);
-    const asmPathWin   = path.join(PROJECT_DIR, 'output.asm');
-    const tapPathWin   = path.join(PROJECT_DIR, 'output.tap');
+    const asmPathWin = path.join(PROJECT_DIR, 'output.asm');
+    const tapPathWin = path.join(PROJECT_DIR, 'output.tap');
 
     try {
       fs.writeFileSync(tmpFile, sourceCode, 'utf8');
@@ -84,7 +84,7 @@ ipcMain.handle('compile', async (event, sourceCode) => {
 
     exec(command, { timeout: 30000, cwd: PROJECT_DIR }, (error, stdout, stderr) => {
       // Limpiar archivo temporal
-      try { fs.unlinkSync(tmpFile); } catch (_) {}
+      try { fs.unlinkSync(tmpFile); } catch (_) { }
 
       const output = [stdout, stderr].filter(Boolean).join('\n').trim();
       const hasFailed = (error && error.code && error.code !== 0)
@@ -155,7 +155,7 @@ ipcMain.handle('save-tap-dialog', async (event, defaultName) => {
   try {
     fs.copyFileSync(sourceTap, filePath);
     // Borrar el .tap temporal de la carpeta del proyecto (evita doble copia)
-    try { fs.unlinkSync(sourceTap); } catch (_) {}
+    try { fs.unlinkSync(sourceTap); } catch (_) { }
     return { saved: true, filePath };
   } catch (err) {
     return { saved: false, error: err.message };

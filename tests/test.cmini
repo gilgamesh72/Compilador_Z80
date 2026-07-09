@@ -5,7 +5,7 @@ int delay;
 
 pos = 22928; 
 
-while ((1 < 2) {
+while (1 < 2) {
     poke(pos, 16);
     key = peek(23560);
     

@@ -38,7 +38,6 @@ while (1 < 2) {
     alive = 1;
     
     // Guardar posicion inicial en buffer circular
-    // NOTA: poke() escribe 8 bits. Dividimos pos (16 bits) en 2 bytes manualmente.
     if (pos < 22784) { msb = 88; lsb = pos - 22528; }
     else { 
         if (pos < 23040) { msb = 89; lsb = pos - 22784; }
