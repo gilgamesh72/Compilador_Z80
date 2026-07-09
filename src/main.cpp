@@ -9,7 +9,7 @@ using namespace std;
 
 // Variables y funciones externas de Flex/Bison
 extern int yyparse();
-extern Block* program_root;
+extern Bloque* program_root;
 extern FILE* yyin;
 extern int lex_errors;
 
@@ -33,26 +33,26 @@ int main(int argc, char** argv) {
     }
 
     cout << "[2/4] Ejecutando análisis semántico...\n";
-    SemanticAnalyzer semantic;
-    semantic.analyze(program_root);
+    AnalizadorSemantico analizador;
+    analizador.analizar(program_root);
     
-    if (semantic.hasErrors()) {
+    if (analizador.tieneErrores()) {
         cerr << "Se encontraron errores semánticos. Deteniendo compilación.\n";
         return 1;
     }
 
     cout << "[3/4] Generando Código Intermedio (TAC)...\n";
-    TACGenerator tacGen;
-    tacGen.generate(program_root);
+    GeneradorTAC generadorTac;
+    generadorTac.generar(program_root);
     
 
 
     cout << "[4/4] Generando Código Z80...\n";
-    Z80Generator z80Gen(tacGen.getInstructions());
+    GeneradorZ80 generadorZ80(generadorTac.getInstructions());
     
     string outFilename = "output.asm";
     ofstream outFile(outFilename);
-    z80Gen.generate(outFile);
+    generadorZ80.generar(outFile);
     outFile.close();
 
     cout << "Compilación finalizada exitosamente. Archivo generado: " << outFilename << "\n";

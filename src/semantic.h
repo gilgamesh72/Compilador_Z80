@@ -4,28 +4,29 @@
 
 using namespace std;
 
-class SemanticAnalyzer : public ASTVisitor {
+class AnalizadorSemantico : public VisitanteAST {
 private:
     SymbolTable* currentEnv;
     bool hasError;
 
 public:
-    SemanticAnalyzer();
-    ~SemanticAnalyzer();
+    AnalizadorSemantico();
+    ~AnalizadorSemantico();
 
-    void analyze(ASTNode* root);
-    bool hasErrors() const { return hasError; }
+    void analizar(NodoAST* root);
+    bool tieneErrores() const { return hasError; }
 
-    void visit(NumExpr* node) override;
-    void visit(IdExpr* node) override;
-    void visit(PeekExpr* node) override;
-    void visit(BinaryExpr* node) override;
+    void visitar(ExprNumero* node) override;
+    void visitar(ExprCaracter* node) override;
+    void visitar(ExprIdentificador* node) override;
+    void visitar(ExprLeerMemoria* node) override;
+    void visitar(ExprBinaria* node) override;
     
-    void visit(Block* node) override;
-    void visit(VarDecl* node) override;
-    void visit(Assign* node) override;
-    void visit(IfStmt* node) override;
-    void visit(WhileStmt* node) override;
-    void visit(PokeStmt* node) override;
-    void visit(ReturnStmt* node) override;
+    void visitar(Bloque* node) override;
+    void visitar(DeclaracionVariable* node) override;
+    void visitar(Asignacion* node) override;
+    void visitar(SentenciaSi* node) override;
+    void visitar(SentenciaMientras* node) override;
+    void visitar(SentenciaPoke* node) override;
+    void visitar(SentenciaRetorno* node) override;
 };

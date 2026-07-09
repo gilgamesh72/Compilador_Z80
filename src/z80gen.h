@@ -7,19 +7,19 @@
 
 using namespace std;
 
-class Z80Generator {
+class GeneradorZ80 {
 private:
     vector<TACInstr> tac;
     set<string> variables;
     
-    void extractVariables();
-    bool isNumber(const string& s);
+    void extraerVariables();
+    bool esNumero(const string& s);
     
     // Helpers
-    void loadHL(const string& arg, ostream& out);
-    void loadDE(const string& arg, ostream& out);
+    void cargarHL(const string& arg, ostream& out);
+    void cargarDE(const string& arg, ostream& out);
 
 public:
-    Z80Generator(const vector<TACInstr>& t);
-    void generate(ostream& out);
+    GeneradorZ80(const vector<TACInstr>& t);
+    void generar(ostream& out);
 };

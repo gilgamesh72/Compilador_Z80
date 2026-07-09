@@ -3,11 +3,11 @@
 
 using namespace std;
 
-Z80Generator::Z80Generator(const vector<TACInstr>& t) : tac(t) {
-    extractVariables();
+GeneradorZ80::GeneradorZ80(const vector<TACInstr>& t) : tac(t) {
+    extraerVariables();
 }
 
-bool Z80Generator::isNumber(const string& s) {
+bool GeneradorZ80::esNumero(const string& s) {
     if (s.empty()) return false;
     for (char c : s) {
         if (!isdigit(c) && c != '-') return false;
@@ -15,10 +15,10 @@ bool Z80Generator::isNumber(const string& s) {
     return true;
 }
 
-void Z80Generator::extractVariables() {
+void GeneradorZ80::extraerVariables() {
     for (const auto& i : tac) {
-        if (!i.arg1.empty() && !isNumber(i.arg1)) variables.insert(i.arg1);
-        if (!i.arg2.empty() && !isNumber(i.arg2)) variables.insert(i.arg2);
+        if (!i.arg1.empty() && !esNumero(i.arg1)) variables.insert(i.arg1);
+        if (!i.arg2.empty() && !esNumero(i.arg2)) variables.insert(i.arg2);
         if (!i.result.empty() && i.op != TACOp::LABEL && i.op != TACOp::JUMP && i.op != TACOp::JUMPF) {
             variables.insert(i.result);
         }
@@ -26,8 +26,8 @@ void Z80Generator::extractVariables() {
 }
 
 // Carga arg en HL (como 16 bits)
-void Z80Generator::loadHL(const string& arg, ostream& out) {
-    if (isNumber(arg)) {
+void GeneradorZ80::cargarHL(const string& arg, ostream& out) {
+    if (esNumero(arg)) {
         out << "    LD HL, " << arg << "\n";
     } else {
         out << "    LD HL, (" << arg << ")\n";
@@ -35,15 +35,15 @@ void Z80Generator::loadHL(const string& arg, ostream& out) {
 }
 
 // Carga arg en DE (como 16 bits)
-void Z80Generator::loadDE(const string& arg, ostream& out) {
-    if (isNumber(arg)) {
+void GeneradorZ80::cargarDE(const string& arg, ostream& out) {
+    if (esNumero(arg)) {
         out << "    LD DE, " << arg << "\n";
     } else {
         out << "    LD DE, (" << arg << ")\n";
     }
 }
 
-void Z80Generator::generate(ostream& out) {
+void GeneradorZ80::generar(ostream& out) {
     out << ";; --- Z80 Generado por C-Mini Compiler ---\n";
     out << "    ORG 32768 ; Origen comun para homebrew\n\n";
     out << "START:\n";
@@ -53,28 +53,28 @@ void Z80Generator::generate(ostream& out) {
     for (const auto& instr : tac) {
         switch (instr.op) {
             case TACOp::ASSIGN:
-                loadHL(instr.arg1, out);
+                cargarHL(instr.arg1, out);
                 out << "    LD (" << instr.result << "), HL\n";
                 break;
                 
             case TACOp::ADD:
-                loadHL(instr.arg1, out);
-                loadDE(instr.arg2, out);
+                cargarHL(instr.arg1, out);
+                cargarDE(instr.arg2, out);
                 out << "    ADD HL, DE\n";
                 out << "    LD (" << instr.result << "), HL\n";
                 break;
                 
             case TACOp::SUB:
-                loadHL(instr.arg1, out);
-                loadDE(instr.arg2, out);
+                cargarHL(instr.arg1, out);
+                cargarDE(instr.arg2, out);
                 out << "    AND A ; clear carry\n";
                 out << "    SBC HL, DE\n";
                 out << "    LD (" << instr.result << "), HL\n";
                 break;
                 
             case TACOp::LT: {
-                loadHL(instr.arg1, out);
-                loadDE(instr.arg2, out);
+                cargarHL(instr.arg1, out);
+                cargarDE(instr.arg2, out);
                 out << "    AND A ; clear carry\n";
                 out << "    SBC HL, DE\n";
                 string lTrue = "CMP_TRUE_" + to_string(cmpCounter);
@@ -90,8 +90,8 @@ void Z80Generator::generate(ostream& out) {
             }
                 
             case TACOp::EQ: {
-                loadHL(instr.arg1, out);
-                loadDE(instr.arg2, out);
+                cargarHL(instr.arg1, out);
+                cargarDE(instr.arg2, out);
                 out << "    AND A\n";
                 out << "    SBC HL, DE\n";
                 string lTrue = "CMP_TRUE_" + to_string(cmpCounter);
@@ -116,7 +116,7 @@ void Z80Generator::generate(ostream& out) {
                 
             case TACOp::JUMPF:
                 // arg1 == 0 jump
-                loadHL(instr.arg1, out);
+                cargarHL(instr.arg1, out);
                 out << "    LD A, H\n";
                 out << "    OR L\n";
                 out << "    JP Z, " << instr.result << "\n";
@@ -124,9 +124,9 @@ void Z80Generator::generate(ostream& out) {
                 
             case TACOp::POKE:
                 // poke(addr, val)
-                loadHL(instr.arg1, out); // addr
+                cargarHL(instr.arg1, out); // addr
                 out << "    PUSH HL\n";
-                loadHL(instr.arg2, out); // val
+                cargarHL(instr.arg2, out); // val
                 out << "    LD A, L\n";   // asumimos 8 bits para poke
                 out << "    POP HL\n";
                 out << "    LD (HL), A\n";
@@ -134,7 +134,7 @@ void Z80Generator::generate(ostream& out) {
                 
             case TACOp::PEEK:
                 // val = peek(addr)
-                loadHL(instr.arg1, out);
+                cargarHL(instr.arg1, out);
                 out << "    LD A, (HL)\n";
                 out << "    LD L, A\n";
                 out << "    LD H, 0\n";

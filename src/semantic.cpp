@@ -3,9 +3,9 @@
 
 using namespace std;
 
-SemanticAnalyzer::SemanticAnalyzer() : currentEnv(new SymbolTable()), hasError(false) {}
+AnalizadorSemantico::AnalizadorSemantico() : currentEnv(new SymbolTable()), hasError(false) {}
 
-SemanticAnalyzer::~SemanticAnalyzer() {
+AnalizadorSemantico::~AnalizadorSemantico() {
     // Liberar ambientes
     while (currentEnv) {
         SymbolTable* parent = currentEnv->parent;
@@ -14,23 +14,31 @@ SemanticAnalyzer::~SemanticAnalyzer() {
     }
 }
 
-void SemanticAnalyzer::analyze(ASTNode* root) {
+void AnalizadorSemantico::analizar(NodoAST* root) {
     if (root) {
-        root->accept(*this);
+        root->aceptar(*this);
     }
 }
 
-void SemanticAnalyzer::visit(NumExpr* node) {
+void AnalizadorSemantico::visitar(ExprNumero* node) {
     // Literal numbers default to INT, unless truncated later
     node->exprType = DataType::INT;
 }
 
-static bool isByteRangeViolation(Expr* expr) {
-    NumExpr* num = dynamic_cast<NumExpr*>(expr);
+void AnalizadorSemantico::visitar(ExprCaracter* node) {
+    node->exprType = DataType::CHAR;
+}
+
+static bool esFueraDeRangoByte(Expresion* expr) {
+    ExprNumero* num = dynamic_cast<ExprNumero*>(expr);
     return num && (num->value < 0 || num->value > 255);
 }
 
-void SemanticAnalyzer::visit(IdExpr* node) {
+static bool esTipoDe8Bits(DataType type) {
+    return type == DataType::BYTE || type == DataType::CHAR;
+}
+
+void AnalizadorSemantico::visitar(ExprIdentificador* node) {
     Symbol* sym = currentEnv->lookup(node->name);
     if (!sym) {
         cerr << "Error semántico: Variable no declarada '" << node->name << "'\n";
@@ -41,14 +49,14 @@ void SemanticAnalyzer::visit(IdExpr* node) {
     }
 }
 
-void SemanticAnalyzer::visit(PeekExpr* node) {
-    if (node->address) node->address->accept(*this);
+void AnalizadorSemantico::visitar(ExprLeerMemoria* node) {
+    if (node->address) node->address->aceptar(*this);
     node->exprType = DataType::BYTE; // peek devuelve un byte de memoria
 }
 
-void SemanticAnalyzer::visit(BinaryExpr* node) {
-    if (node->left) node->left->accept(*this);
-    if (node->right) node->right->accept(*this);
+void AnalizadorSemantico::visitar(ExprBinaria* node) {
+    if (node->left) node->left->aceptar(*this);
+    if (node->right) node->right->aceptar(*this);
     
     // Simplificado: promover a INT si alguno es INT, si no BYTE
     DataType l = node->left->exprType;
@@ -62,17 +70,23 @@ void SemanticAnalyzer::visit(BinaryExpr* node) {
     if (node->op == '<' || node->op == '>' || node->op == 'E' || node->op == 'A' || node->op == 'O') {
         node->exprType = DataType::BYTE; // boolean resulta en byte
     } else {
-        node->exprType = (l == DataType::INT || r == DataType::INT) ? DataType::INT : DataType::BYTE;
+        if (l == DataType::INT || r == DataType::INT) {
+            node->exprType = DataType::INT;
+        } else if (l == DataType::CHAR || r == DataType::CHAR) {
+            node->exprType = DataType::CHAR;
+        } else {
+            node->exprType = DataType::BYTE;
+        }
     }
 }
 
-void SemanticAnalyzer::visit(Block* node) {
+void AnalizadorSemantico::visitar(Bloque* node) {
     // Crear un nuevo scope
     SymbolTable* newEnv = new SymbolTable(currentEnv);
     currentEnv = newEnv;
 
     for (auto stmt : node->statements) {
-        stmt->accept(*this);
+        stmt->aceptar(*this);
     }
 
     // Volver al scope anterior
@@ -81,15 +95,15 @@ void SemanticAnalyzer::visit(Block* node) {
     delete oldEnv;
 }
 
-void SemanticAnalyzer::visit(VarDecl* node) {
+void AnalizadorSemantico::visitar(DeclaracionVariable* node) {
     if (!currentEnv->insert(node->name, node->type)) {
         cerr << "Error semántico: Variable ya declarada '" << node->name << "' en el mismo scope\n";
         hasError = true;
     }
 }
 
-void SemanticAnalyzer::visit(Assign* node) {
-    if (node->value) node->value->accept(*this);
+void AnalizadorSemantico::visitar(Asignacion* node) {
+    if (node->value) node->value->aceptar(*this);
     
     Symbol* sym = currentEnv->lookup(node->name);
     if (!sym) {
@@ -98,32 +112,32 @@ void SemanticAnalyzer::visit(Assign* node) {
     } else if (node->value->exprType == DataType::VOID) {
          cerr << "Error semántico: No se puede asignar tipo VOID a la variable '" << node->name << "'\n";
          hasError = true;
-    } else if (sym->type == DataType::BYTE && isByteRangeViolation(node->value)) {
-        NumExpr* num = dynamic_cast<NumExpr*>(node->value);
+    } else if (esTipoDe8Bits(sym->type) && esFueraDeRangoByte(node->value)) {
+        ExprNumero* num = dynamic_cast<ExprNumero*>(node->value);
         cerr << "Error semántico: El valor " << num->value
-             << " está fuera del rango de byte (0-255) para la variable '" << node->name << "'\n";
+             << " está fuera del rango de 8 bits (0-255) para la variable '" << node->name << "'\n";
         hasError = true;
     }
 }
 
-void SemanticAnalyzer::visit(IfStmt* node) {
-    if (node->condition) node->condition->accept(*this);
-    if (node->thenBlock) node->thenBlock->accept(*this);
-    if (node->elseBlock) node->elseBlock->accept(*this);
+void AnalizadorSemantico::visitar(SentenciaSi* node) {
+    if (node->condition) node->condition->aceptar(*this);
+    if (node->thenBlock) node->thenBlock->aceptar(*this);
+    if (node->elseBlock) node->elseBlock->aceptar(*this);
 }
 
-void SemanticAnalyzer::visit(WhileStmt* node) {
-    if (node->condition) node->condition->accept(*this);
-    if (node->body) node->body->accept(*this);
+void AnalizadorSemantico::visitar(SentenciaMientras* node) {
+    if (node->condition) node->condition->aceptar(*this);
+    if (node->body) node->body->aceptar(*this);
 }
 
-void SemanticAnalyzer::visit(PokeStmt* node) {
-    if (node->address) node->address->accept(*this);
-    if (node->value) node->value->accept(*this);
+void AnalizadorSemantico::visitar(SentenciaPoke* node) {
+    if (node->address) node->address->aceptar(*this);
+    if (node->value) node->value->aceptar(*this);
 }
 
-void SemanticAnalyzer::visit(ReturnStmt* node) {
+void AnalizadorSemantico::visitar(SentenciaRetorno* node) {
     if (node->value) {
-        node->value->accept(*this);
+        node->value->aceptar(*this);
     }
 }

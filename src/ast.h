@@ -11,6 +11,7 @@ using namespace std;
 enum class DataType {
     VOID,
     BYTE, // Entero de 8 bits sin signo / con signo
+    CHAR, // Carácter de 8 bits
     INT,  // Entero de 16 bits
     UNKNOWN
 };
@@ -35,7 +36,7 @@ public:
             return false;
         }
         symbols[name] = {name, type, currentOffset};
-        currentOffset += (type == DataType::BYTE) ? 1 : 2;
+        currentOffset += (type == DataType::BYTE || type == DataType::CHAR) ? 1 : 2;
         return true;
     }
 
@@ -52,119 +53,126 @@ public:
 
 // --- Clases Base del AST ---
 
-class ASTNode {
+class NodoAST {
 public:
-    virtual ~ASTNode() = default;
-    virtual void accept(ASTVisitor& visitor) = 0;
+    virtual ~NodoAST() = default;
+    virtual void aceptar(VisitanteAST& visitante) = 0;
 };
 
 // Clase base para las expresiones
-class Expr : public ASTNode {
+class Expresion : public NodoAST {
 public:
     DataType exprType = DataType::UNKNOWN; // Agregado para el análisis semántico
     string tmpVar; // Agregado para el TAC (variable temporal que almacena su resultado)
 };
 
 // Clase base para las sentencias
-class Stmt : public ASTNode {
+class Sentencia : public NodoAST {
 };
 
 // --- Expresiones ---
 
-class NumExpr : public Expr {
+class ExprNumero : public Expresion {
 public:
     int value;
-    NumExpr(int v) : value(v) {}
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    ExprNumero(int v) : value(v) {}
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class IdExpr : public Expr {
+class ExprCaracter : public Expresion {
+public:
+    int value;
+    ExprCaracter(int v) : value(v) {}
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
+};
+
+class ExprIdentificador : public Expresion {
 public:
     string name;
-    IdExpr(const string& n) : name(n) {}
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    ExprIdentificador(const string& n) : name(n) {}
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class PeekExpr : public Expr {
+class ExprLeerMemoria : public Expresion {
 public:
-    Expr* address;
-    PeekExpr(Expr* addr) : address(addr) {}
-    ~PeekExpr() { delete address; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* address;
+    ExprLeerMemoria(Expresion* addr) : address(addr) {}
+    ~ExprLeerMemoria() { delete address; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class BinaryExpr : public Expr {
+class ExprBinaria : public Expresion {
 public:
     char op; 
-    Expr* left;
-    Expr* right;
-    BinaryExpr(char o, Expr* l, Expr* r) : op(o), left(l), right(r) {}
-    ~BinaryExpr() { delete left; delete right; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* left;
+    Expresion* right;
+    ExprBinaria(char o, Expresion* l, Expresion* r) : op(o), left(l), right(r) {}
+    ~ExprBinaria() { delete left; delete right; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
 // --- Sentencias ---
 
-class Block : public Stmt {
+class Bloque : public Sentencia {
 public:
-    vector<Stmt*> statements;
-    ~Block() { 
+    vector<Sentencia*> statements;
+    ~Bloque() { 
         for(auto s : statements) delete s; 
     }
-    void addStatement(Stmt* s) { statements.push_back(s); }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    void agregarSentencia(Sentencia* s) { statements.push_back(s); }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class VarDecl : public Stmt {
+class DeclaracionVariable : public Sentencia {
 public:
     DataType type;
     string name;
-    VarDecl(DataType t, const string& n) : type(t), name(n) {}
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    DeclaracionVariable(DataType t, const string& n) : type(t), name(n) {}
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class Assign : public Stmt {
+class Asignacion : public Sentencia {
 public:
     string name;
-    Expr* value;
-    Assign(const string& n, Expr* v) : name(n), value(v) {}
-    ~Assign() { delete value; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* value;
+    Asignacion(const string& n, Expresion* v) : name(n), value(v) {}
+    ~Asignacion() { delete value; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class IfStmt : public Stmt {
+class SentenciaSi : public Sentencia {
 public:
-    Expr* condition;
-    Block* thenBlock;
-    Block* elseBlock;
-    IfStmt(Expr* cond, Block* thenB, Block* elseB = nullptr) 
+    Expresion* condition;
+    Bloque* thenBlock;
+    Bloque* elseBlock;
+    SentenciaSi(Expresion* cond, Bloque* thenB, Bloque* elseB = nullptr) 
         : condition(cond), thenBlock(thenB), elseBlock(elseB) {}
-    ~IfStmt() { delete condition; delete thenBlock; delete elseBlock; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    ~SentenciaSi() { delete condition; delete thenBlock; delete elseBlock; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class WhileStmt : public Stmt {
+class SentenciaMientras : public Sentencia {
 public:
-    Expr* condition;
-    Block* body;
-    WhileStmt(Expr* cond, Block* b) : condition(cond), body(b) {}
-    ~WhileStmt() { delete condition; delete body; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* condition;
+    Bloque* body;
+    SentenciaMientras(Expresion* cond, Bloque* b) : condition(cond), body(b) {}
+    ~SentenciaMientras() { delete condition; delete body; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class PokeStmt : public Stmt {
+class SentenciaPoke : public Sentencia {
 public:
-    Expr* address;
-    Expr* value;
-    PokeStmt(Expr* addr, Expr* val) : address(addr), value(val) {}
-    ~PokeStmt() { delete address; delete value; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* address;
+    Expresion* value;
+    SentenciaPoke(Expresion* addr, Expresion* val) : address(addr), value(val) {}
+    ~SentenciaPoke() { delete address; delete value; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };
 
-class ReturnStmt : public Stmt {
+class SentenciaRetorno : public Sentencia {
 public:
-    Expr* value; 
-    ReturnStmt(Expr* val) : value(val) {}
-    ~ReturnStmt() { delete value; }
-    void accept(ASTVisitor& visitor) override { visitor.visit(this); }
+    Expresion* value; 
+    SentenciaRetorno(Expresion* val) : value(val) {}
+    ~SentenciaRetorno() { delete value; }
+    void aceptar(VisitanteAST& visitante) override { visitante.visitar(this); }
 };

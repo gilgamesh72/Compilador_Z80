@@ -3,32 +3,34 @@
 using namespace std;
 
 // Declaraciones previas de los nodos del AST
-class NumExpr;
-class IdExpr;
-class PeekExpr;
-class BinaryExpr;
-class Block;
-class VarDecl;
-class Assign;
-class IfStmt;
-class WhileStmt;
-class PokeStmt;
-class ReturnStmt;
+class ExprNumero;
+class ExprCaracter;
+class ExprIdentificador;
+class ExprLeerMemoria;
+class ExprBinaria;
+class Bloque;
+class DeclaracionVariable;
+class Asignacion;
+class SentenciaSi;
+class SentenciaMientras;
+class SentenciaPoke;
+class SentenciaRetorno;
 
-class ASTVisitor {
+class VisitanteAST {
 public:
-    virtual ~ASTVisitor() = default;
+    virtual ~VisitanteAST() = default;
 
-    virtual void visit(NumExpr* node) = 0;
-    virtual void visit(IdExpr* node) = 0;
-    virtual void visit(PeekExpr* node) = 0;
-    virtual void visit(BinaryExpr* node) = 0;
+    virtual void visitar(ExprNumero* node) = 0;
+    virtual void visitar(ExprCaracter* node) = 0;
+    virtual void visitar(ExprIdentificador* node) = 0;
+    virtual void visitar(ExprLeerMemoria* node) = 0;
+    virtual void visitar(ExprBinaria* node) = 0;
     
-    virtual void visit(Block* node) = 0;
-    virtual void visit(VarDecl* node) = 0;
-    virtual void visit(Assign* node) = 0;
-    virtual void visit(IfStmt* node) = 0;
-    virtual void visit(WhileStmt* node) = 0;
-    virtual void visit(PokeStmt* node) = 0;
-    virtual void visit(ReturnStmt* node) = 0;
+    virtual void visitar(Bloque* node) = 0;
+    virtual void visitar(DeclaracionVariable* node) = 0;
+    virtual void visitar(Asignacion* node) = 0;
+    virtual void visitar(SentenciaSi* node) = 0;
+    virtual void visitar(SentenciaMientras* node) = 0;
+    virtual void visitar(SentenciaPoke* node) = 0;
+    virtual void visitar(SentenciaRetorno* node) = 0;
 };

@@ -22,36 +22,37 @@ struct TACInstr {
     string arg2;
     string result;
 
-    void print() const;
+    void imprimir() const;
 };
 
-class TACGenerator : public ASTVisitor {
+class GeneradorTAC : public VisitanteAST {
 private:
     int tempCount;
     int labelCount;
     vector<TACInstr> instructions;
 
-    string newTemp();
-    string newLabel();
-    void emit(TACOp op, const string& arg1, const string& arg2, const string& result);
+    string nuevaTemporal();
+    string nuevaEtiqueta();
+    void emitir(TACOp op, const string& arg1, const string& arg2, const string& result);
 
 public:
-    TACGenerator();
+    GeneradorTAC();
     
-    void generate(ASTNode* root);
+    void generar(NodoAST* root);
     const vector<TACInstr>& getInstructions() const { return instructions; }
-    void printAll() const;
+    void imprimirTodo() const;
 
-    void visit(NumExpr* node) override;
-    void visit(IdExpr* node) override;
-    void visit(PeekExpr* node) override;
-    void visit(BinaryExpr* node) override;
+    void visitar(ExprNumero* node) override;
+    void visitar(ExprCaracter* node) override;
+    void visitar(ExprIdentificador* node) override;
+    void visitar(ExprLeerMemoria* node) override;
+    void visitar(ExprBinaria* node) override;
     
-    void visit(Block* node) override;
-    void visit(VarDecl* node) override;
-    void visit(Assign* node) override;
-    void visit(IfStmt* node) override;
-    void visit(WhileStmt* node) override;
-    void visit(PokeStmt* node) override;
-    void visit(ReturnStmt* node) override;
+    void visitar(Bloque* node) override;
+    void visitar(DeclaracionVariable* node) override;
+    void visitar(Asignacion* node) override;
+    void visitar(SentenciaSi* node) override;
+    void visitar(SentenciaMientras* node) override;
+    void visitar(SentenciaPoke* node) override;
+    void visitar(SentenciaRetorno* node) override;
 };

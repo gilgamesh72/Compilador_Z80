@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void TACInstr::print() const {
+void TACInstr::imprimir() const {
     switch (op) {
         case TACOp::ADD:    cout << result << " = " << arg1 << " + " << arg2 << "\n"; break;
         case TACOp::SUB:    cout << result << " = " << arg1 << " - " << arg2 << "\n"; break;
@@ -23,50 +23,54 @@ void TACInstr::print() const {
     }
 }
 
-TACGenerator::TACGenerator() : tempCount(0), labelCount(0) {}
+GeneradorTAC::GeneradorTAC() : tempCount(0), labelCount(0) {}
 
-string TACGenerator::newTemp() {
+string GeneradorTAC::nuevaTemporal() {
     return "t" + to_string(++tempCount);
 }
 
-string TACGenerator::newLabel() {
+string GeneradorTAC::nuevaEtiqueta() {
     return "L" + to_string(++labelCount);
 }
 
-void TACGenerator::emit(TACOp op, const string& arg1, const string& arg2, const string& result) {
+void GeneradorTAC::emitir(TACOp op, const string& arg1, const string& arg2, const string& result) {
     instructions.push_back({op, arg1, arg2, result});
 }
 
-void TACGenerator::generate(ASTNode* root) {
-    if (root) root->accept(*this);
+void GeneradorTAC::generar(NodoAST* root) {
+    if (root) root->aceptar(*this);
 }
 
-void TACGenerator::printAll() const {
+void GeneradorTAC::imprimirTodo() const {
     for (const auto& instr : instructions) {
-        instr.print();
+        instr.imprimir();
     }
 }
 
-void TACGenerator::visit(NumExpr* node) {
+void GeneradorTAC::visitar(ExprNumero* node) {
     node->tmpVar = to_string(node->value); // Literal is its own temp
 }
 
-void TACGenerator::visit(IdExpr* node) {
+void GeneradorTAC::visitar(ExprCaracter* node) {
+    node->tmpVar = to_string(node->value); // El backend usa el código ASCII/Unicode del carácter
+}
+
+void GeneradorTAC::visitar(ExprIdentificador* node) {
     node->tmpVar = node->name; // Variable is its own temp
 }
 
-void TACGenerator::visit(PeekExpr* node) {
-    if (node->address) node->address->accept(*this);
-    string tmp = newTemp();
-    emit(TACOp::PEEK, node->address->tmpVar, "", tmp);
+void GeneradorTAC::visitar(ExprLeerMemoria* node) {
+    if (node->address) node->address->aceptar(*this);
+    string tmp = nuevaTemporal();
+    emitir(TACOp::PEEK, node->address->tmpVar, "", tmp);
     node->tmpVar = tmp;
 }
 
-void TACGenerator::visit(BinaryExpr* node) {
-    if (node->left) node->left->accept(*this);
-    if (node->right) node->right->accept(*this);
+void GeneradorTAC::visitar(ExprBinaria* node) {
+    if (node->left) node->left->aceptar(*this);
+    if (node->right) node->right->aceptar(*this);
     
-    string tmp = newTemp();
+    string tmp = nuevaTemporal();
     TACOp op;
     switch(node->op) {
         case '+': op = TACOp::ADD; break;
@@ -78,70 +82,70 @@ void TACGenerator::visit(BinaryExpr* node) {
         case 'O': op = TACOp::OR; break;
         default:  op = TACOp::ADD; break;
     }
-    emit(op, node->left->tmpVar, node->right->tmpVar, tmp);
+    emitir(op, node->left->tmpVar, node->right->tmpVar, tmp);
     node->tmpVar = tmp;
 }
 
-void TACGenerator::visit(Block* node) {
+void GeneradorTAC::visitar(Bloque* node) {
     for (auto stmt : node->statements) {
-        stmt->accept(*this);
+        stmt->aceptar(*this);
     }
 }
 
-void TACGenerator::visit(VarDecl* node) {
+void GeneradorTAC::visitar(DeclaracionVariable* node) {
     // Declaraciones pueden no requerir TAC en variables locales de pila 
     // pero si es Z80 Dummy y pre-asignamos todo como globales, no hacemos nada aquí.
 }
 
-void TACGenerator::visit(Assign* node) {
-    if (node->value) node->value->accept(*this);
-    emit(TACOp::ASSIGN, node->value->tmpVar, "", node->name);
+void GeneradorTAC::visitar(Asignacion* node) {
+    if (node->value) node->value->aceptar(*this);
+    emitir(TACOp::ASSIGN, node->value->tmpVar, "", node->name);
 }
 
-void TACGenerator::visit(IfStmt* node) {
-    if (node->condition) node->condition->accept(*this);
+void GeneradorTAC::visitar(SentenciaSi* node) {
+    if (node->condition) node->condition->aceptar(*this);
     
-    string labelFalse = newLabel();
-    string labelEnd = node->elseBlock ? newLabel() : labelFalse;
+    string labelFalse = nuevaEtiqueta();
+    string labelEnd = node->elseBlock ? nuevaEtiqueta() : labelFalse;
     
-    emit(TACOp::JUMPF, node->condition->tmpVar, "", labelFalse);
+    emitir(TACOp::JUMPF, node->condition->tmpVar, "", labelFalse);
     
-    if (node->thenBlock) node->thenBlock->accept(*this);
+    if (node->thenBlock) node->thenBlock->aceptar(*this);
     
     if (node->elseBlock) {
-        emit(TACOp::JUMP, "", "", labelEnd);
-        emit(TACOp::LABEL, "", "", labelFalse);
-        node->elseBlock->accept(*this);
+        emitir(TACOp::JUMP, "", "", labelEnd);
+        emitir(TACOp::LABEL, "", "", labelFalse);
+        node->elseBlock->aceptar(*this);
     }
     
-    emit(TACOp::LABEL, "", "", labelEnd);
+    emitir(TACOp::LABEL, "", "", labelEnd);
 }
 
-void TACGenerator::visit(WhileStmt* node) {
-    string labelStart = newLabel();
-    string labelEnd = newLabel();
+void GeneradorTAC::visitar(SentenciaMientras* node) {
+    string labelStart = nuevaEtiqueta();
+    string labelEnd = nuevaEtiqueta();
     
-    emit(TACOp::LABEL, "", "", labelStart);
-    if (node->condition) node->condition->accept(*this);
-    emit(TACOp::JUMPF, node->condition->tmpVar, "", labelEnd);
+    emitir(TACOp::LABEL, "", "", labelStart);
+    if (node->condition) node->condition->aceptar(*this);
+    emitir(TACOp::JUMPF, node->condition->tmpVar, "", labelEnd);
     
-    if (node->body) node->body->accept(*this);
+    if (node->body) node->body->aceptar(*this);
     
-    emit(TACOp::JUMP, "", "", labelStart);
-    emit(TACOp::LABEL, "", "", labelEnd);
+    emitir(TACOp::JUMP, "", "", labelStart);
+    emitir(TACOp::LABEL, "", "", labelEnd);
 }
 
-void TACGenerator::visit(PokeStmt* node) {
-    if (node->address) node->address->accept(*this);
-    if (node->value) node->value->accept(*this);
-    emit(TACOp::POKE, node->address->tmpVar, node->value->tmpVar, "");
+void GeneradorTAC::visitar(SentenciaPoke* node) {
+    if (node->address) node->address->aceptar(*this);
+    if (node->value) node->value->aceptar(*this);
+    emitir(TACOp::POKE, node->address->tmpVar, node->value->tmpVar, "");
 }
 
-void TACGenerator::visit(ReturnStmt* node) {
+void GeneradorTAC::visitar(SentenciaRetorno* node) {
     if (node->value) {
-        node->value->accept(*this);
-        emit(TACOp::RETURN, node->value->tmpVar, "", "");
+        node->value->aceptar(*this);
+        emitir(TACOp::RETURN, node->value->tmpVar, "", "");
     } else {
-        emit(TACOp::RETURN, "", "", "");
+        emitir(TACOp::RETURN, "", "", "");
     }
 }

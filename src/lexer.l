@@ -20,6 +20,7 @@ void lexer_error(const char* msg) {
 %%
 
 "byte"      { return T_BYTE; }
+"char"      { return T_CHAR; }
 "int"       { return T_INT; }
 "if"        { return T_IF; }
 "else"      { return T_ELSE; }
@@ -31,6 +32,25 @@ void lexer_error(const char* msg) {
 [0-9]+      { 
     yylval.num = atoi(yytext); 
     return T_NUM; 
+}
+
+\'([^\\\n]|\\[nrt'"\\0])\' {
+    int value = 0;
+    if (yytext[1] == '\\') {
+        switch (yytext[2]) {
+            case 'n': value = '\n'; break;
+            case 'r': value = '\r'; break;
+            case 't': value = '\t'; break;
+            case '\\': value = '\\'; break;
+            case '\'': value = '\''; break;
+            case '0': value = '\0'; break;
+            default: value = yytext[2]; break;
+        }
+    } else {
+        value = static_cast<unsigned char>(yytext[1]);
+    }
+    yylval.num = value;
+    return T_CHARLIT;
 }
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
