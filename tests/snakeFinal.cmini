@@ -1,0 +1,150 @@
+byte key;
+byte dir;
+int pos;
+int food;
+int headPtr;
+int tailPtr;
+int tailPos;
+int delay;
+int maxDelay;     // <--- NUEVA VARIABLE: Controla la velocidad máxima
+int seed;
+int idx;
+int x;
+int y;
+int alive;
+int lsb;
+int msb;
+int t_lsb;
+int t_msb;
+int validFood;
+
+seed = 123;
+
+// Bucle principal del juego (permite reiniciar al morir)
+while (1 < 2) {
+    // Inicializar pantalla (limpiar con color de fondo 56)
+    idx = 22528;
+    while (idx < 23296) {
+        poke(idx, 56);
+        idx = idx + 1;
+    }
+    
+    x = 15;
+    y = 12;
+    pos = 22927;       // Centro (22528 + 12*32 + 15)
+    food = 22560;
+    dir = 100;         // 100 equivale a 'd'
+    headPtr = 30000;
+    tailPtr = 30000;
+    alive = 1;
+    
+    maxDelay = 4000;   // <--- VELOCIDAD INICIAL (Más alto = Más lento)
+    
+    // Guardar posicion inicial en buffer circular
+    if (pos < 22784) { msb = 88; lsb = pos - 22528; }
+    else { 
+        if (pos < 23040) { msb = 89; lsb = pos - 22784; }
+        else { msb = 90; lsb = pos - 23040; } 
+    }
+    poke(headPtr, lsb);
+    poke(headPtr + 1, msb);
+    
+    poke(pos, 16);     // Dibujar cabeza (rojo)
+    poke(food, 8);     // Dibujar comida (azul)
+    
+    // Bucle de movimiento
+    while (alive == 1) {
+        seed = seed + 17;
+        if (767 < seed) { seed = seed - 768; }
+        
+        key = peek(23560);
+        if (0 < key) {
+            // Evitar que gire 180 grados hacia si misma usando código numérico ASCII
+            if (key == 97) { if (dir == 100) {} else { dir = 97; } }
+            if (key == 100) { if (dir == 97) {} else { dir = 100; } }
+            if (key == 119) { if (dir == 115) {} else { dir = 119; } }
+            if (key == 115) { if (dir == 119) {} else { dir = 115; } }
+            poke(23560, 0); 
+        }
+        
+        // Calcular nuevo x, y, y pos
+        if (dir == 97) { x = x - 1; pos = pos - 1; }
+        if (dir == 100) { x = x + 1; pos = pos + 1; }
+        if (dir == 119) { y = y - 1; pos = pos - 32; }
+        if (dir == 115) { y = y + 1; pos = pos + 32; }
+        
+        // Comprobar colision con paredes (Game Over)
+        if (x < 0) { alive = 0; }
+        if (31 < x) { alive = 0; }
+        if (y < 0) { alive = 0; }
+        if (23 < y) { alive = 0; }
+        
+        // Comprobar si choca consigo misma
+        // Revisa la memoria de video: Si a donde va a moverse ya es rojo (16), pierde.
+        if (alive == 1) {
+            if (peek(pos) == 16) {
+                alive = 0;
+            }
+        }
+        
+        if (alive == 1) {
+            if (pos == food) {
+                // Crecer: Generar nueva comida
+                validFood = 0;
+                while (validFood == 0) {
+                    food = 22528 + seed;
+                    if (peek(food) == 16) {
+                        seed = seed + 17;
+                        if (767 < seed) { seed = seed - 768; }
+                    } else {
+                        validFood = 1;
+                    }
+                }
+                poke(food, 8); 
+                
+                // --- AUMENTAR VELOCIDAD AL COMER ---
+                maxDelay = maxDelay - 150; // Baja el retardo para acelerar
+                if (maxDelay < 500) {      // Límite de velocidad para que siga siendo jugable
+                    maxDelay = 500; 
+                }
+                
+            } else {
+                // No come: Mover y borrar la cola
+                t_lsb = peek(tailPtr);
+                t_msb = peek(tailPtr + 1);
+                
+                // Reconstruir la direccion de 16 bits
+                if (t_msb == 88) { tailPos = 22528 + t_lsb; }
+                if (t_msb == 89) { tailPos = 22784 + t_lsb; }
+                if (t_msb == 90) { tailPos = 23040 + t_lsb; }
+                
+                poke(tailPos, 56); 
+                
+                tailPtr = tailPtr + 2;
+                if (31000 < tailPtr) { tailPtr = 30000; }
+            }
+            
+            // Guardar nueva posicion de la cabeza en el buffer circular
+            if (pos < 22784) { msb = 88; lsb = pos - 22528; }
+            else { 
+                if (pos < 23040) { msb = 89; lsb = pos - 22784; }
+                else { msb = 90; lsb = pos - 23040; } 
+            }
+            
+            headPtr = headPtr + 2;
+            if (31000 < headPtr) { headPtr = 30000; }
+            
+            poke(headPtr, lsb);
+            poke(headPtr + 1, msb);
+            
+            // Dibujar nueva cabeza
+            poke(pos, 16);
+        }
+        
+        // Retardo dinámico para controlar la velocidad
+        delay = 0;
+        while (delay < maxDelay) {
+            delay = delay + 1;
+        }
+    }
+}
