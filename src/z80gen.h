@@ -17,7 +17,7 @@ private:
     map<string,int>     arrays;      // nombre → bytes totales  (DEFS)
     map<string,string>  strings;     // etiqueta → contenido (DEFM)
 
-    // ── Soporte de funciones ────────────────────────────────
+    // Soporte de funciones
     set<string>     allParamVars;        // Nombres de params (no van a DEFW global)
     map<string,int> currentParamOffsets; // nombre → offset IX de la función actual
     bool            inFunction;          // true si estamos generando código de función

@@ -13,10 +13,7 @@ extern Bloque* program_root;
 extern FILE* yyin;
 extern int lex_errors;
 
-// ---------------------------------------------------------------
-// Recorre el AST buscando DeclaracionArreglo para registrar
-// los arreglos en el generador Z80 (tamaño en bytes).
-// ---------------------------------------------------------------
+// Registra los arreglos en el generador Z80
 static void registrarArreglos(Bloque* bloque, GeneradorZ80& gen) {
     if (!bloque) return;
     for (Sentencia* s : bloque->statements) {

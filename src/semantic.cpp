@@ -3,9 +3,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Constructor / Destructor
-// ============================================================
+// Constructores y Destructores
 
 AnalizadorSemantico::AnalizadorSemantico()
     : currentEnv(new SymbolTable()), hasError(false),
@@ -23,9 +21,7 @@ void AnalizadorSemantico::analizar(NodoAST* root) {
     if (root) root->aceptar(*this);
 }
 
-// ============================================================
-//  Helpers
-// ============================================================
+// Funciones auxiliares
 
 bool AnalizadorSemantico::esTipoDe8Bits(DataType type) {
     return type == DataType::BYTE || type == DataType::CHAR;
@@ -36,9 +32,7 @@ bool AnalizadorSemantico::esFueraDeRangoByte(Expresion* expr) {
     return num && (num->value < 0 || num->value > 255);
 }
 
-// ============================================================
-//  Expresiones
-// ============================================================
+// Evaluacion de expresiones
 
 void AnalizadorSemantico::visitar(ExprNumero* node) {
     node->exprType = DataType::INT;
@@ -194,9 +188,7 @@ void AnalizadorSemantico::visitar(ExprIn* node) {
     node->exprType = DataType::BYTE; // IN devuelve un byte
 }
 
-// ============================================================
-//  NUEVO: Llamada a función como expresión
-// ============================================================
+// Llamada a funcion como expresion
 void AnalizadorSemantico::visitar(ExprLlamadaFuncion* node) {
     // Verificar que la función está declarada
     auto it = functionTable.find(node->name);
@@ -227,9 +219,7 @@ void AnalizadorSemantico::visitar(ExprLlamadaFuncion* node) {
     node->exprType = info.returnType;
 }
 
-// ============================================================
-//  Sentencias
-// ============================================================
+// Evaluacion de sentencias
 
 void AnalizadorSemantico::visitar(Bloque* node) {
     SymbolTable* newEnv = new SymbolTable(currentEnv);
@@ -266,9 +256,7 @@ void AnalizadorSemantico::visitar(DeclaracionArreglo* node) {
     }
 }
 
-// ============================================================
-//  NUEVO: Declaración de función
-// ============================================================
+// Declaracion de funcion
 void AnalizadorSemantico::visitar(DeclaracionFuncion* node) {
     // Verificar que no esté ya declarada
     if (functionTable.count(node->name)) {
@@ -432,9 +420,7 @@ void AnalizadorSemantico::visitar(SentenciaRetorno* node) {
     }
 }
 
-// ============================================================
-//  NUEVO: Llamada a función como sentencia
-// ============================================================
+// Llamada a funcion como sentencia
 void AnalizadorSemantico::visitar(SentenciaLlamadaFuncion* node) {
     // Verificar que la función está declarada
     auto it = functionTable.find(node->name);

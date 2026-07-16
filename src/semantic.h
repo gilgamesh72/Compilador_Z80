@@ -7,9 +7,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Información de una función en la tabla de funciones
-// ============================================================
+// Informacion de funcion
 struct FunctionInfo {
     DataType                         returnType;
     vector<pair<DataType, string>>   params;  // (tipo, nombre)

@@ -7,9 +7,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Tipos de datos soportados por el lenguaje
-// ============================================================
+// Tipos de datos soportados por el lenguaje
 enum class DataType {
     VOID,
     BYTE, // Entero de 8 bits sin signo / con signo
@@ -20,9 +18,7 @@ enum class DataType {
     UNKNOWN
 };
 
-// ============================================================
-//  Tabla de Símbolos
-// ============================================================
+// Tabla de Simbolos
 struct Symbol {
     string   name;
     DataType type;
@@ -80,9 +76,7 @@ public:
     }
 };
 
-// ============================================================
-//  Clases Base del AST
-// ============================================================
+// Clases Base del AST
 
 class NodoAST {
 public:
@@ -101,9 +95,7 @@ public:
 class Sentencia : public NodoAST {
 };
 
-// ============================================================
-//  EXPRESIONES
-// ============================================================
+// Expresiones
 
 // Literal numérico entero
 class ExprNumero : public Expresion {
@@ -187,9 +179,7 @@ public:
     void aceptar(VisitanteAST& v) override { v.visitar(this); }
 };
 
-// ============================================================
-//  NUEVO: Llamada a función como expresión   foo(a, b)
-// ============================================================
+// Llamada a funcion como expresion
 class ExprLlamadaFuncion : public Expresion {
 public:
     string             name;    // Nombre de la función
@@ -203,9 +193,7 @@ public:
     void aceptar(VisitanteAST& v) override { v.visitar(this); }
 };
 
-// ============================================================
-//  SENTENCIAS
-// ============================================================
+// Sentencias
 
 // Bloque { ... }
 class Bloque : public Sentencia {
@@ -236,19 +224,14 @@ public:
     void aceptar(VisitanteAST& v) override { v.visitar(this); }
 };
 
-// ============================================================
-//  NUEVO: Parámetro de función  (tipo nombre)
-// ============================================================
+// Parametro de funcion
 struct Parametro {
     DataType type;
     string   name;
     Parametro(DataType t, const string& n) : type(t), name(n) {}
 };
 
-// ============================================================
-//  NUEVO: Definición de función
-//  int foo(int a, byte b) { ... }
-// ============================================================
+// Definicion de funcion
 class DeclaracionFuncion : public Sentencia {
 public:
     DataType           returnType;
@@ -362,9 +345,7 @@ public:
     void aceptar(VisitanteAST& v) override { v.visitar(this); }
 };
 
-// ============================================================
-//  NUEVO: Llamada a función como sentencia   foo(a, b);
-// ============================================================
+// Llamada a funcion como sentencia
 class SentenciaLlamadaFuncion : public Sentencia {
 public:
     string             name;

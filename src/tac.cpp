@@ -4,9 +4,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Impresión de instrucciones TAC (para depuración)
-// ============================================================
+// Impresion de instrucciones TAC
 
 void TACInstr::imprimir() const {
     switch (op) {
@@ -68,9 +66,7 @@ void TACInstr::imprimir() const {
     }
 }
 
-// ============================================================
-//  Constructor e inicialización
-// ============================================================
+// Constructores e inicializacion
 
 GeneradorTAC::GeneradorTAC()
     : tempCount(0), labelCount(0), stringCount(0) {}
@@ -102,9 +98,7 @@ void GeneradorTAC::imprimirTodo() const {
     for (const auto& i : instructions) i.imprimir();
 }
 
-// ============================================================
-//  Expresiones
-// ============================================================
+// Evaluacion de expresiones
 
 void GeneradorTAC::visitar(ExprNumero* node) {
     node->tmpVar = to_string(node->value);
@@ -189,10 +183,7 @@ void GeneradorTAC::visitar(ExprIn* node) {
     node->tmpVar = tmp;
 }
 
-// ============================================================
-//  NUEVO: Llamada a función como expresión   foo(a, b)
-//  Convención cdecl: argumentos de derecha a izquierda
-// ============================================================
+// Llamada a funcion como expresion
 void GeneradorTAC::visitar(ExprLlamadaFuncion* node) {
     // Evaluar argumentos de izquierda a derecha (necesitamos sus tmpVars)
     for (auto arg : node->args) {
@@ -208,9 +199,7 @@ void GeneradorTAC::visitar(ExprLlamadaFuncion* node) {
     node->tmpVar = tmp;
 }
 
-// ============================================================
-//  Sentencias
-// ============================================================
+// Evaluacion de sentencias
 
 void GeneradorTAC::visitar(Bloque* node) {
     for (auto stmt : node->statements) {
@@ -228,9 +217,7 @@ void GeneradorTAC::visitar(DeclaracionArreglo* node) {
     emitir(TACOp::ADDR_OF, node->name, to_string(node->size), node->name + "_base");
 }
 
-// ============================================================
-//  NUEVO: Definición de función
-// ============================================================
+// Definicion de funcion
 void GeneradorTAC::visitar(DeclaracionFuncion* node) {
     // Marcar inicio de la función
     emitir(TACOp::FUNC_BEGIN, node->name, to_string(node->params.size()), "");
@@ -343,9 +330,7 @@ void GeneradorTAC::visitar(SentenciaRetorno* node) {
     }
 }
 
-// ============================================================
-//  NUEVO: Llamada a función como sentencia   foo(a, b);
-// ============================================================
+// Llamada a funcion como sentencia
 void GeneradorTAC::visitar(SentenciaLlamadaFuncion* node) {
     // Evaluar argumentos
     for (auto arg : node->args) {

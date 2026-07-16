@@ -4,9 +4,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Constructor
-// ============================================================
+// Constructor
 
 GeneradorZ80::GeneradorZ80(const vector<TACInstr>& t)
     : tac(t), cmpCounter(0), inFunction(false), lastWasReturn(false) {
@@ -18,9 +16,7 @@ void GeneradorZ80::registrarArreglo(const string& name, int bytes) {
     variables.erase(name);
 }
 
-// ============================================================
-//  Funciones auxiliares
-// ============================================================
+// Funciones auxiliares
 
 bool esNumero(const string& s) {
     if (s.empty()) return false;
@@ -49,9 +45,7 @@ string safeName(const string& s) {
     return s;
 }
 
-// ============================================================
-//  Extraer variables del TAC
-// ============================================================
+// Extraer variables del TAC
 
 void GeneradorZ80::extraerVariables() {
     for (const auto& i : tac) {
@@ -69,7 +63,13 @@ void GeneradorZ80::extraerVariables() {
             continue;
         }
         if (i.op == TACOp::ARRAY_LOAD || i.op == TACOp::ARRAY_STORE) {
-            if (!i.result.empty()) variables.insert(i.result);
+            // ARRAY_LOAD:  result = nombre del temp donde se carga el elemento
+            // ARRAY_STORE: result = valor a guardar (puede ser numero literal)
+            if (!i.result.empty() && !esNumero(i.result) && !esEtiquetaFlujo(i.result))
+                variables.insert(i.result);
+            // arg2 = indice (puede ser variable o numero)
+            if (!i.arg2.empty() && !esNumero(i.arg2) && !esEtiquetaFlujo(i.arg2))
+                variables.insert(i.arg2);
             continue;
         }
 
@@ -90,9 +90,7 @@ void GeneradorZ80::extraerVariables() {
     for (const auto& p : allParamVars) variables.erase(p);
 }
 
-// ============================================================
-//  rawParamOffset: busca offset IX manejando prefijo _v_
-// ============================================================
+// rawParamOffset: busca offset IX manejando prefijo _v_
 
 int GeneradorZ80::rawParamOffset(const string& arg) const {
     auto it = currentParamOffsets.find(arg);
@@ -104,9 +102,7 @@ int GeneradorZ80::rawParamOffset(const string& arg) const {
     return -1;
 }
 
-// ============================================================
-//  Helpers de carga / almacenamiento
-// ============================================================
+// Helpers de carga / almacenamiento
 
 void GeneradorZ80::cargarHL(const string& arg, ostream& out) {
     if (esNumero(arg)) {
@@ -160,20 +156,7 @@ void GeneradorZ80::almacenarHL(const string& result, ostream& out) {
     }
 }
 
-// ============================================================
-//  Generación principal — DOS PASADAS
-//  mainCode: código del programa principal (START:)
-//  funcCode: cuerpos de funciones (debajo del programa principal)
-//
-//  Estructura del ASM de salida:
-//    START:
-//      [mainCode]    ← código global se ejecuta primero
-//      RET
-//      [funcCode]    ← funciones llamadas con CALL desde mainCode
-//      [rutinas math]
-//      [sección de datos]
-//    END START
-// ============================================================
+// Generación principal
 
 void GeneradorZ80::generar(ostream& out) {
     out << ";; ============================================================\n";
@@ -416,17 +399,20 @@ void GeneradorZ80::generar(ostream& out) {
         case TACOp::ADDR_OF:
             break;
 
-        // Puertos
+        // Puertos — BC = puerto completo de 16 bits
         case TACOp::PORT_IN:
-            cargarA(instr.arg1, cur);
-            cur << "    LD C, A\n"; cur << "    IN A, (C)\n";
+            cargarHL(instr.arg1, cur);          // HL = puerto (16 bits)
+            cur << "    LD B, H\n";             // B = byte alto
+            cur << "    LD C, L\n";             // C = byte bajo
+            cur << "    IN A, (C)\n";           // lee puerto BC
             cur << "    LD L, A\n"; cur << "    LD H, 0\n";
             almacenarHL(instr.result, cur); break;
 
         case TACOp::PORT_OUT:
-            cargarA(instr.arg1, cur);
-            cur << "    LD C, A\n";
-            cargarA(instr.arg2, cur);
+            cargarHL(instr.arg1, cur);          // HL = puerto (16 bits)
+            cur << "    LD B, H\n";
+            cur << "    LD C, L\n";
+            cargarA(instr.arg2, cur);           // A = valor a enviar
             cur << "    OUT (C), A\n"; break;
 
         // Control de flujo
@@ -503,9 +489,7 @@ void GeneradorZ80::generar(ostream& out) {
     out << "    END START\n";
 }
 
-// ============================================================
-//  Rutinas software de matemáticas
-// ============================================================
+// Rutinas de matemáticas
 
 void GeneradorZ80::emitirRutinasMath(ostream& out) {
     out << "\n;; ============================================================\n";
@@ -529,38 +513,34 @@ void GeneradorZ80::emitirRutinasMath(ostream& out) {
     out << "    RET\n\n";
 
     out << "__DIV16:\n";
-    out << "    LD A, L\n";
-    out << "    LD (__DIV16_NL), A\n";
-    out << "    LD A, H\n";
-    out << "    LD (__DIV16_NH), A\n";
-    out << "    XOR A\n";
-    out << "    LD (__DIV16_RL), A\n";
-    out << "    LD (__DIV16_RH), A\n";
-    out << "    LD HL, 0\n";
-    out << "    LD B, 16\n";
+    out << "    LD A, 16\n";
+    out << "    LD BC, 0\n";
     out << "__DIV16_LOOP:\n";
-    out << "    LD A, (__DIV16_NH)\n"; out << "    RLCA\n"; out << "    LD (__DIV16_NH), A\n";
-    out << "    LD A, (__DIV16_NL)\n"; out << "    RLCA\n"; out << "    LD (__DIV16_NL), A\n";
-    out << "    LD A, (__DIV16_RH)\n"; out << "    RLA\n";  out << "    LD (__DIV16_RH), A\n";
-    out << "    LD A, (__DIV16_RL)\n"; out << "    RLA\n";  out << "    LD (__DIV16_RL), A\n";
+    out << "    ADD HL, HL\n";
+    out << "    RL C\n";
+    out << "    RL B\n";
     out << "    PUSH HL\n";
-    out << "    LD A, (__DIV16_RH)\n"; out << "    LD H, A\n";
-    out << "    LD A, (__DIV16_RL)\n"; out << "    LD L, A\n";
+    out << "    LD H, B\n";
+    out << "    LD L, C\n";
     out << "    AND A\n";
     out << "    SBC HL, DE\n";
     out << "    JR C, __DIV16_SKIP\n";
-    out << "    LD A, L\n"; out << "    LD (__DIV16_RL), A\n";
-    out << "    LD A, H\n"; out << "    LD (__DIV16_RH), A\n";
-    out << "    POP HL\n"; out << "    SCF\n"; out << "    JR __DIV16_SH\n";
-    out << "__DIV16_SKIP:\n"; out << "    POP HL\n"; out << "    AND A\n";
-    out << "__DIV16_SH:\n"; out << "    ADC HL, HL\n"; out << "    DJNZ __DIV16_LOOP\n";
-    out << "    LD A, (__DIV16_RH)\n"; out << "    LD D, A\n";
-    out << "    LD A, (__DIV16_RL)\n"; out << "    LD E, A\n";
+    out << "    LD B, H\n";
+    out << "    LD C, L\n";
+    out << "    POP HL\n";
+    out << "    INC L\n";
+    out << "    DEC A\n";
+    out << "    JR NZ, __DIV16_LOOP\n";
+    out << "    LD D, B\n";
+    out << "    LD E, C\n";
     out << "    RET\n";
-    out << "__DIV16_NL: DEFB 0\n";
-    out << "__DIV16_NH: DEFB 0\n";
-    out << "__DIV16_RL: DEFB 0\n";
-    out << "__DIV16_RH: DEFB 0\n\n";
+    out << "__DIV16_SKIP:\n";
+    out << "    POP HL\n";
+    out << "    DEC A\n";
+    out << "    JR NZ, __DIV16_LOOP\n";
+    out << "    LD D, B\n";
+    out << "    LD E, C\n";
+    out << "    RET\n\n";
 
     out << "__LSHIFT16:\n";
     out << "    LD B, E\n"; out << "    INC B\n"; out << "    JR __LSHIFT16_CHECK\n";
@@ -573,9 +553,7 @@ void GeneradorZ80::emitirRutinasMath(ostream& out) {
     out << "__RSHIFT16_CHECK:\n"; out << "    DJNZ __RSHIFT16_LOOP\n"; out << "    RET\n\n";
 }
 
-// ============================================================
-//  Sección de datos
-// ============================================================
+// Sección de datos
 
 void GeneradorZ80::emitirSeccionDatos(ostream& out) {
     out << ";; ============================================================\n";

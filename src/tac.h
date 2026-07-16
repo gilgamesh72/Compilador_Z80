@@ -6,9 +6,7 @@
 
 using namespace std;
 
-// ============================================================
-//  Operaciones TAC extendidas
-// ============================================================
+// Operaciones TAC extendidas
 enum class TACOp {
     // Aritméticas
     ADD, SUB, MUL, DIV, MOD,
@@ -51,9 +49,7 @@ struct TACInstr {
     void imprimir() const;
 };
 
-// ============================================================
-//  Generador de TAC (patrón Visitor)
-// ============================================================
+// Generador de TAC
 class GeneradorTAC : public VisitanteAST {
 private:
     int tempCount;
