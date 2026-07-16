@@ -1,0 +1,34 @@
+// ==================================================
+// TEST VISUAL MINIMO para ZX Spectrum
+// Cambia el borde a ROJO y pinta la pantalla AZUL
+// Si ves algo = el compilador funciona!
+// ==================================================
+
+byte color;
+int pos;
+int fin;
+
+// 1. Borde ROJO (color 2)
+color = 2;
+out(0xFE, color);
+
+// 2. Llenar los atributos de color (22528 al 23295 = 768 bytes)
+// Azul brillante sobre negro = 0x09 = 9
+pos = 22528;
+fin = 23296;
+while (pos < fin) {
+    poke(pos, 9);
+    pos = pos + 1;
+}
+
+// 3. Escribir un patron en el display (linea superior)
+// 16384 = inicio del display file, 0xFF = 8 pixeles negros
+pos = 16384;
+fin = 16512;
+while (pos < fin) {
+    poke(pos, 255);
+    pos = pos + 1;
+}
+
+// FIN: retornar a BASIC con borde ROJO y pantalla AZUL
+return 0;

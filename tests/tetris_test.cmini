@@ -1,0 +1,67 @@
+// ================================================================
+// Programa de prueba: Tetris basico para Z80
+// Ejercita: arreglos, for, while, bitwise, in/out, operadores nuevos
+// ================================================================
+
+// Declaracion de variables
+int score;
+int i;
+int pieza;
+int fila;
+int col;
+int tmp;
+
+// Arreglo del tablero Tetris (20 filas x 10 columnas = 200 celdas)
+int tablero[200];
+
+// Inicializar el tablero con ceros usando for
+for (i = 0; i < 200; i = i + 1) {
+    tablero[i] = 0;
+}
+
+// Colocar una pieza en posicion fila=2, col=5
+fila = 2;
+col  = 5;
+tmp  = fila * 10 + col;
+tablero[tmp] = 1;
+
+// Leer teclado: puerto 0xFE del ZX Spectrum
+pieza = in(0xFE);
+
+// Aplicar mascara de 5 bits (teclas del Spectrum)
+pieza = pieza & 31;
+
+// Enviar color de borde al puerto de video
+out(0xFE, 2);
+
+// Actualizar puntuacion
+score = score + 10;
+
+// Escribir byte bajo de score en la pantalla de video
+poke(16384, score & 255);
+
+// Byte alto: score >> 8
+tmp = score >> 8;
+poke(16385, tmp);
+
+// Bucle while de ejemplo: llenar primeras 10 celdas
+i = 0;
+while (i < 10) {
+    tablero[i] = i * 2;
+    i = i + 1;
+}
+
+// Condicion con !=
+if (score != 0) {
+    score = score + 1;
+}
+
+// Condicion con >=
+if (pieza >= 16) {
+    pieza = pieza - 16;
+}
+
+// Complemento bitwise
+tmp = ~pieza;
+
+return score;

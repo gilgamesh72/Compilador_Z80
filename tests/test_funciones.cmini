@@ -1,0 +1,53 @@
+// ============================================================
+// TEST DE FUNCIONES — Z80-Mini Compiler
+// Prueba la convención de llamada cdecl con marco IX
+// ============================================================
+
+// Función: suma dos enteros y retorna el resultado
+int suma(int a, int b) {
+    int resultado;
+    resultado = a + b;
+    return resultado;
+}
+
+// Función: escribe un byte en una posición de la pantalla de atributos
+// pos = dirección en el rango 22528-23295
+// color = byte de atributo (ej. 56=blanco, 16=rojo, 9=azul)
+int pintar(int pos, int color) {
+    poke(pos, color);
+    return 0;
+}
+
+// Función: pinta una franja horizontal de 32 celdas
+int pintarFila(int fila, int color) {
+    int base;
+    int i;
+    base = 22528 + fila * 32;
+    i = 0;
+    while (i < 32) {
+        poke(base + i, color);
+        i = i + 1;
+    }
+    return 0;
+}
+
+// ============================================================
+// Programa principal
+// ============================================================
+
+int res;
+
+// 1. Probar suma: 3 + 4 = 7 → poke en 22528 debe ser 7
+res = suma(3, 4);
+poke(22528, res);
+
+// 2. Llamar pintar: celda 22560 = color rojo (16)
+pintar(22560, 16);
+
+// 3. Pintar fila 10 de color azul brillante (9)
+pintarFila(10, 9);
+
+// 4. Pintar fila 20 de color amarillo (56+8=? usamos 62)
+pintarFila(20, 62);
+
+return 0;
